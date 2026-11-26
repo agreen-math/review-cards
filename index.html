@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Rokkitt:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root{
+  --desk:#27363d; --desk-deep:#1c282d; --desk-line:#3b4e55;
+  --on-desk:#eef3f1; --on-desk-soft:#b9c8c5;
+  --ink:#1d2830; --ink-soft:#4a5a63;
+  --paper:#fdfdfb; --paper-rule:#c3d7ee;
+  --mint:#d7ebdc; --mint-rule:#a9cfb6;
+  --red:#c9453b; --amber:#ffcf5c; --focus:#8fd0ff;
+  --radius:6px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--desk); color:var(--on-desk);
+  font:17px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+}
+button{font:inherit}
+.wrap{flex:1; width:100%; max-width:880px; margin:0 auto; padding:24px 20px 8px}
+
+header{display:flex; gap:16px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap}
+h1{font:800 2rem/1.1 Rokkitt,Georgia,serif; margin:0 0 6px}
+.intro{margin:0; color:var(--on-desk-soft); max-width:56ch}
+.ghost{
+  background:transparent; color:var(--on-desk); border:2px solid var(--on-desk-soft);
+  border-radius:var(--radius); padding:8px 14px; min-height:44px; cursor:pointer;
+}
+.ghost:hover{border-color:var(--on-desk)}
+.notice{background:#ffe9a8; color:#3b2f00; padding:10px 14px; border-radius:var(--radius); margin-top:16px}
+
+.table{display:grid; gap:32px; margin-top:28px}
+.row{display:grid; grid-template-columns:112px 1fr 1fr; gap:18px; align-items:stretch}
+
+/* deck piles */
+.pile{display:flex; flex-direction:column; align-items:flex-start; gap:8px}
+.stack{position:relative; width:84px; height:56px; margin:8px 8px 0 0}
+.stack i{position:absolute; inset:0; border-radius:5px; background:#31444b; border:2px solid #52696f}
+.stack i:nth-child(2){transform:translate(4px,-4px)}
+.stack i:nth-child(3){
+  transform:translate(8px,-8px);
+  background:linear-gradient(var(--red),var(--red)) 0 14px/100% 2px no-repeat, #31444b;
+}
+.pile.empty .stack{opacity:.35}
+h2{font:700 1.35rem/1.1 Rokkitt,Georgia,serif; margin:0}
+.count{margin:0; color:var(--on-desk-soft); font-size:.95rem; line-height:1.3}
+
+/* cards */
+.slot{display:flex; flex-direction:column; gap:6px; min-width:0}
+.card{
+  position:relative; flex:1; display:flex; min-height:150px; perspective:900px;
+  border-radius:var(--radius); transition:transform .18s ease, box-shadow .18s ease;
+}
+.card.dealt{animation:deal .55s cubic-bezier(.2,.7,.2,1) backwards; animation-delay:var(--delay,0ms)}
+@keyframes deal{from{opacity:0; transform:translate(-80px,-12px) rotate(-6deg)}}
+.inner{flex:1; display:grid; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.3,.7,.2,1)}
+.card[data-flipped="true"] .inner{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1; position:relative; border-radius:var(--radius);
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  padding:46px 16px 18px; color:var(--ink); min-width:0;
+  box-shadow:0 1px 0 rgba(0,0,0,.25), 0 8px 18px rgba(0,0,0,.28);
+  background:
+    linear-gradient(var(--red),var(--red)) 0 38px/100% 2px no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 25px, var(--rule) 25px 26px) 0 40px/100% 100% no-repeat,
+    var(--sheet);
+}
+.back{transform:rotateY(180deg)}
+.topic .face{--sheet:var(--paper); --rule:var(--paper-rule)}
+.task .face{--sheet:var(--mint); --rule:var(--mint-rule)}
+.tag{position:absolute; top:9px; left:16px; font-size:.82rem; color:var(--ink-soft)}
+.text{margin:0; font-size:1.2rem; line-height:26px; font-weight:700; overflow-wrap:anywhere; white-space:pre-line}
+.back .text{font-weight:400; font-size:1.05rem}
+.katex{font-size:1.05em}
+.katex-display{margin:.5em 0}
+
+.pick{
+  position:absolute; inset:0; z-index:2; padding:0; border:0; background:transparent;
+  border-radius:var(--radius); cursor:pointer;
+}
+.pick:focus-visible{outline:3px solid var(--focus); outline-offset:5px}
+.card[data-selected="true"]{transform:translateY(-6px); box-shadow:0 0 0 4px var(--amber)}
+.badge{
+  position:absolute; top:-11px; right:10px; z-index:3; display:none; pointer-events:none;
+  background:var(--amber); color:#2b2100; font-weight:700; font-size:.82rem;
+  padding:2px 10px; border-radius:99px;
+}
+.card[data-selected="true"] .badge{display:block}
+
+.flip{
+  align-self:flex-start; background:transparent; border:0; padding:6px 2px; min-height:40px;
+  color:var(--on-desk); text-decoration:underline; text-underline-offset:3px; cursor:pointer;
+}
+.flip:focus-visible{outline:3px solid var(--focus); outline-offset:2px}
+.empty-slot{
+  flex:1; min-height:150px; display:grid; place-items:center; text-align:center; padding:16px;
+  border:2px dashed var(--desk-line); border-radius:var(--radius); color:var(--on-desk-soft);
+}
+
+/* history */
+.log{margin-top:32px}
+.log summary{cursor:pointer; color:var(--on-desk-soft); min-height:32px}
+.log ol{margin:10px 0 0; padding-left:24px}
+.log li{margin:0 0 10px}
+.log b{display:block}
+.log span{color:var(--on-desk-soft)}
+
+/* action bar */
+.bar{position:sticky; bottom:0; background:var(--desk-deep); border-top:1px solid var(--desk-line); margin-top:24px}
+.bar-in{max-width:880px; margin:0 auto; padding:14px 20px; display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+.status{margin:0; flex:1 1 260px}
+.primary{
+  background:var(--amber); color:#2b2100; border:0; border-radius:var(--radius);
+  padding:12px 18px; min-height:44px; font-weight:700; cursor:pointer;
+}
+.primary:hover:not(:disabled){background:#ffd978}
+.primary:disabled{background:var(--desk-line); color:#a9bbb8; cursor:not-allowed}
+.primary:focus-visible{outline:3px solid var(--focus); outline-offset:3px}
+.ghost:focus-visible{outline:3px solid var(--focus); outline-offset:3px}
+
+@media (max-width:600px){
+  .wrap{padding:18px 14px 8px}
+  .row{grid-template-columns:1fr 1fr; gap:14px}
+  .pile{grid-column:1/-1; flex-direction:row; align-items:center; gap:14px; margin-bottom:8px}
+  .stack{width:46px; height:30px; margin:6px 8px 0 0}
+  .text{font-size:1.05rem}
+  .back .text{font-size:.95rem}
+  .face{padding-left:12px; padding-right:12px}
+  .tag{left:12px}
+  .bar-in{padding:12px 14px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 id="title"></h1>
+      <p class="intro" id="intro"></p>
+    </div>
+    <button type="button" class="ghost" id="restart">Start over</button>
+  </header>
+
+  <div class="notice" id="notice" role="alert" hidden></div>
+
+  <main class="table">
+    <section class="row" id="row-topics" aria-labelledby="h-topics">
+      <div class="pile" id="pile-topics">
+        <div class="stack" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div><h2 id="h-topics">Topics</h2><p class="count" id="count-topics"></p></div>
+      </div>
+    </section>
+    <section class="row" id="row-tasks" aria-labelledby="h-tasks">
+      <div class="pile" id="pile-tasks">
+        <div class="stack" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div><h2 id="h-tasks">Tasks</h2><p class="count" id="count-tasks"></p></div>
+      </div>
+    </section>
+  </main>
+
+  <details class="log" id="log" hidden>
+    <summary id="log-summary"></summary>
+    <ol id="log-list"></ol>
+  </details>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <button type="button" class="primary" id="finish" disabled>Done: replace these cards</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+/* ---------- Settings you can edit ---------- */
+const SETTINGS = {
+  title: "Precalculus review cards",
+  intro: "Choose one topic and one task. Do the task for that topic. Then replace the two cards you used and go again."
+};
+
+/* Shown only if topics.csv / tasks.csv can't be loaded */
+const FALLBACK = {
+  topics: ["Inverse functions", "Radians and degrees", "Vectors", "Limits at infinity: $\\lim_{x\\to\\infty}f(x)$"],
+  tasks: [
+    ["Change one thing.", "Take a problem, change one given, and say how the answer changes and why."],
+    ["Sketch it.", "Draw a graph or diagram connected to this topic. Label every key feature."],
+    ["Spot the mistake.", "Write a solution with one common error. Explain what went wrong and how to fix it."],
+    ["Teach a classmate.", "Explain the big idea in plain words to someone who missed class."]
+  ]
+};
+/* ------------------------------------------- */
+
+const $ = (s) => document.querySelector(s);
+const KINDS = ["topics", "tasks"];
+const MATH = {
+  delimiters: [
+    {left: "$$", right: "$$", display: true},
+    {left: "\\[", right: "\\]", display: true},
+    {left: "$", right: "$", display: false},
+    {left: "\\(", right: "\\)", display: false}
+  ],
+  throwOnError: false
+};
+
+function typeset(el) {
+  if (window.renderMathInElement) {
+    try { window.renderMathInElement(el, MATH); } catch (e) { /* leave plain text */ }
+  }
+}
+
+function shuffle(a) {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
+}
+
+/* Small CSV reader: handles quotes, commas and line breaks inside quotes, and a BOM. */
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, "");
+  const rows = []; let row = [], field = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); rows.push(row); row = []; field = "";
+    } else field += c;
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+
+function toTopics(rows) {
+  if (rows.length && rows[0][0].trim().toLowerCase() === "topic") rows = rows.slice(1);
+  return rows.map((r) => ({front: r[0].trim(), back: ""})).filter((c) => c.front);
+}
+function toTasks(rows) {
+  if (rows.length && rows[0][0].trim().toLowerCase() === "front") rows = rows.slice(1);
+  return rows.map((r) => ({front: (r[0] || "").trim(), back: (r[1] || "").trim()})).filter((c) => c.front);
+}
+
+/* ---------- Deck logic ---------- */
+function makeDeck(cards) { return {deck: shuffle(cards), discard: [], slots: [null, null]}; }
+
+function drawCard(d) {
+  let reshuffled = false;
+  if (d.deck.length === 0 && d.discard.length > 0) {
+    d.deck = shuffle(d.discard); d.discard = []; reshuffled = true;
+  }
+  return {card: d.deck.pop() || null, reshuffled};
+}
+
+/* Replace one slot. Draw first, then discard, so the card you just used can't come right back. */
+function replaceSlot(d, i) {
+  const used = d.slots[i];
+  const {card, reshuffled} = drawCard(d);
+  if (card) { d.slots[i] = card; d.discard.push(used); }
+  return {changed: !!card, reshuffled};
+}
+
+/* ---------- State and rendering ---------- */
+const D = {};
+const rows = {topics: {el: $("#row-topics"), slots: []}, tasks: {el: $("#row-tasks"), slots: []}};
+const state = {sel: {topics: null, tasks: null}, history: []};
+let uid = 0;
+
+function buildSlot(kind, card, i, delay) {
+  const slot = document.createElement("div");
+  slot.className = "slot";
+  if (!card) {
+    slot.innerHTML = '<div class="empty-slot">No more cards</div>';
+    return slot;
+  }
+  const id = kind + "-" + i + "-" + (++uid);
+  const hasBack = kind === "tasks" && card.back;
+  const el = document.createElement("div");
+  el.className = "card dealt " + (kind === "topics" ? "topic" : "task");
+  el.dataset.selected = "false";
+  el.dataset.flipped = "false";
+  el.style.setProperty("--delay", delay + "ms");
+  el.innerHTML =
+    '<div class="inner">' +
+      '<div class="face front"><span class="tag"></span><p class="text" id="' + id + '"></p></div>' +
+      (hasBack ? '<div class="face back" aria-hidden="true" inert><span class="tag">Back</span><p class="text"></p></div>' : "") +
+    '</div>' +
+    '<span class="badge" aria-hidden="true">Chosen</span>' +
+    '<button type="button" class="pick" aria-pressed="false" aria-labelledby="' + id + '"></button>';
+  el.querySelector(".tag").textContent = kind === "topics" ? "Topic" : "Task";
+  el.querySelector(".front .text").textContent = card.front;
+  if (hasBack) el.querySelector(".back .text").textContent = card.back;
+  typeset(el);
+  slot.append(el);
+  el.addEventListener("animationend", () => el.classList.remove("dealt"));
+  el.querySelector(".pick").addEventListener("click", () => select(kind, i));
+
+  if (hasBack) {
+    const flip = document.createElement("button");
+    flip.type = "button"; flip.className = "flip"; flip.textContent = "Read the back";
+    flip.addEventListener("click", () => {
+      const flipped = el.dataset.flipped !== "true";
+      el.dataset.flipped = String(flipped);
+      const front = el.querySelector(".front"), back = el.querySelector(".back");
+      front.inert = flipped; front.setAttribute("aria-hidden", String(flipped));
+      back.inert = !flipped; back.setAttribute("aria-hidden", String(!flipped));
+      flip.textContent = flipped ? "Show the front" : "Read the back";
+    });
+    slot.append(flip);
+  }
+  return slot;
+}
+
+function placeSlot(kind, i, delay) {
+  const node = buildSlot(kind, D[kind].slots[i], i, delay);
+  const old = rows[kind].slots[i];
+  if (old) old.replaceWith(node); else rows[kind].el.append(node);
+  rows[kind].slots[i] = node;
+}
+
+function updateCounts() {
+  KINDS.forEach((k) => {
+    const d = D[k], n = d.deck.length;
+    $("#count-" + k).textContent = n > 0 ? n + " left in deck" : (d.discard.length ? "Reshuffles next" : "Deck is empty");
+    $("#pile-" + k).classList.toggle("empty", n === 0);
+  });
+}
+
+function updateStatus() {
+  const t = state.sel.topics !== null, k = state.sel.tasks !== null;
+  $("#finish").disabled = !(t && k);
+  $("#status").textContent = t && k
+    ? "Do the task for that topic. When you finish, replace the two cards."
+    : t ? "Now choose a task."
+    : k ? "Now choose a topic."
+    : "Choose one topic and one task.";
+}
+
+function updateSelectionUI() {
+  KINDS.forEach((kind) => {
+    rows[kind].slots.forEach((slot, i) => {
+      const card = slot.querySelector(".card");
+      if (!card) return;
+      const on = state.sel[kind] === i;
+      card.dataset.selected = String(on);
+      card.querySelector(".pick").setAttribute("aria-pressed", String(on));
+    });
+  });
+  updateStatus();
+}
+
+function select(kind, i) {
+  state.sel[kind] = state.sel[kind] === i ? null : i;
+  updateSelectionUI();
+}
+
+function renderHistory() {
+  const n = state.history.length;
+  $("#log").hidden = n === 0;
+  $("#log-summary").textContent = "Pairs you've done (" + n + ")";
+}
+
+function finish() {
+  const ti = state.sel.topics, ki = state.sel.tasks;
+  if (ti === null || ki === null) return;
+  const topic = D.topics.slots[ti], task = D.tasks.slots[ki];
+
+  state.history.push({topic, task});
+  const li = document.createElement("li");
+  li.innerHTML = "<b></b><span></span>";
+  li.children[0].textContent = topic.front;
+  li.children[1].textContent = task.front;
+  typeset(li);
+  $("#log-list").append(li);
+  renderHistory();
+
+  const r1 = replaceSlot(D.topics, ti), r2 = replaceSlot(D.tasks, ki);
+  state.sel = {topics: null, tasks: null};
+  if (r1.changed) placeSlot("topics", ti, 0);
+  if (r2.changed) placeSlot("tasks", ki, 120);
+  updateCounts();
+  updateSelectionUI();
+
+  const notes = ["Dealt two new cards."];
+  if (r1.reshuffled) notes.push("The topics deck was reshuffled.");
+  if (r2.reshuffled) notes.push("The tasks deck was reshuffled.");
+  $("#status").textContent = notes.join(" ");
+}
+
+function deal(data) {
+  D.topics = makeDeck(data.topics);
+  D.tasks = makeDeck(data.tasks);
+  KINDS.forEach((k) => { rows[k].slots.forEach((s) => s.remove()); rows[k].slots = []; });
+  state.sel = {topics: null, tasks: null};
+  state.history = [];
+  $("#log-list").innerHTML = "";
+  renderHistory();
+  let delay = 0;
+  KINDS.forEach((k) => {
+    for (let i = 0; i < 2; i++) {
+      D[k].slots[i] = drawCard(D[k]).card;
+      placeSlot(k, i, delay);
+      delay += 100;
+    }
+  });
+  updateCounts();
+  updateSelectionUI();
+}
+
+let DATA = null;
+
+async function loadData() {
+  try {
+    const get = (f) => fetch(f, {cache: "no-cache"}).then((r) => {
+      if (!r.ok) throw new Error(f + " " + r.status);
+      return r.text();
+    });
+    const [t, k] = await Promise.all([get("topics.csv"), get("tasks.csv")]);
+    const data = {topics: toTopics(parseCSV(t)), tasks: toTasks(parseCSV(k))};
+    if (!data.topics.length || !data.tasks.length) throw new Error("empty deck");
+    return data;
+  } catch (e) {
+    const n = $("#notice");
+    n.hidden = false;
+    n.textContent = "Couldn't load topics.csv and tasks.csv, so this is a small built-in sample. " +
+      "If you opened this file from your computer, open the hosted link instead.";
+    return {topics: toTopics(FALLBACK.topics.map((x) => [x])), tasks: toTasks(FALLBACK.tasks)};
+  }
+}
+
+document.title = SETTINGS.title;
+$("#title").textContent = SETTINGS.title;
+$("#intro").textContent = SETTINGS.intro;
+$("#finish").addEventListener("click", finish);
+$("#restart").addEventListener("click", () => deal(DATA));
+
+loadData().then((data) => { DATA = data; deal(DATA); });
+</script>
+</body>
+</html>

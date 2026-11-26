@@ -1,0 +1,17 @@
+front,back
+Change one thing.,"Take a problem, change one given, and say how the answer changes and why."
+Spot the mistake.,Write a solution that has one common error in it. Then explain what went wrong and how to fix it.
+Sketch it.,Draw a graph or diagram connected to this topic. Label every key feature and explain what each one tells you.
+Real-world setup.,Describe a real situation where this topic shows up. Write the math that models it. You do not need to solve it.
+Teach a classmate.,"Explain the big idea to someone who missed class. Use plain words, and define any term you use."
+Write a problem.,Write a problem about this topic and solve it. Then make it harder and say what changed in the solution.
+Work backward.,"Choose an answer first. Write a problem that has exactly that answer, then show that it works."
+Check it a second way.,"Solve a problem about this topic. Then check your answer with a different method, such as a graph, a table, or substituting back in."
+Show two forms.,"Show one idea in two different forms (equation, graph, table, or words) and explain how they match. For example, $y=(x-2)^2-4$ is the same function as $y=x^2-4x$."
+Push to the edge.,"Take a problem and let one value get very large (think $x\to\infty$), very small, negative, or zero. What happens to the answer, and why?"
+"Always, sometimes, never.","Write a statement about this topic. Decide if it is always, sometimes, or never true, and justify your decision with an example or an argument."
+Write a quiz question.,"Write a multiple-choice question with three wrong answers. For each wrong answer, explain the mistake that leads to it."
+Find a connection.,Pick a different topic from this course and explain one way it connects to this one.
+Find the pattern.,"Solve three similar problems, changing one number each time. Describe the pattern in your answers and explain why it happens."
+What do you need?,List the information you need to solve a problem about this topic. Then explain what you could still figure out if one piece were missing.
+Estimate first.,"Solve a problem, but first estimate the answer and explain your reasoning. Then solve it and compare. How close were you?"
